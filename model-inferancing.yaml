@@ -1,0 +1,148 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hf-secret
+type: Opaque
+stringData:
+  # HF_TOKEN: "hf_drhctSxxxxxxxxxxxxcpPdVDtlZG" # fill in the hf hub token
+  HF_TOKEN: "hf_JxxxxxxxxxixgmZztjZ"
+
+---
+apiVersion: serving.kserve.io/v1alpha1
+kind: ClusterStorageContainer
+metadata:
+  name: hf-hub2
+spec:
+  container:
+    name: storage-initializer
+    image: 'kserve/storage-initializer:latest'
+    env:
+      - name: HF_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: hf-secret
+            key: HF_TOKEN
+            optional: false
+    resources:
+      requests:
+        memory: 2Gi
+        cpu: '1'
+      limits:
+        memory: 4Gi
+        cpu: '1'
+  supportedUriFormats:
+    - prefix: 'hf://'
+
+  
+---
+
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: qwen2
+  namespace: kubeflow
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: huggingface
+      args:
+        - --model_id=Qwen/Qwen2.5-0.5B-Instruct
+        - --task=generate
+      env:
+        - name: HUGGINGFACE_HUB_CACHE
+          value: /tmp/huggingface
+        - name: TRANSFORMERS_CACHE
+          value: /tmp/huggingface
+        - name: VLLM_CPU_KVCACHE_SPACE
+          value: "2"
+      storageUri: hf://Qwen/Qwen2.5-0.5B-Instruct
+      resources:
+        limits:
+          cpu: "4"
+          memory: 20Gi
+        requests:
+          cpu: "2"
+          memory: 4Gi
+    nodeSelector:
+      kubeflow: "true"
+    tolerations:
+      - key: kubeflow
+        operator: Exists
+        effect: NoSchedule
+
+---
+########### AUTO SCALE WITH KEDA AND OPENTELEMETRY METRICS ###########
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: huggingface-qwen
+  namespace: kubeflow
+  annotations:
+    serving.kserve.io/deploymentMode: "Standard"
+    serving.kserve.io/autoscalerClass: "keda"
+    serving.kserve.io/enable-prometheus-scraping: "true"
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8080"
+    prometheus.io/scheme: "http"
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: huggingface
+      args:
+        - --model_id=Qwen/Qwen2.5-0.5B-Instruct
+        - --task=generate
+      env:
+        - name: HUGGINGFACE_HUB_CACHE
+          value: /tmp/huggingface
+        - name: TRANSFORMERS_CACHE
+          value: /tmp/huggingface
+        - name: VLLM_CPU_KVCACHE_SPACE
+          value: "2"
+      storageUri: "hf://Qwen/Qwen2.5-0.5B-Instruct"
+      resources:
+        limits:
+          cpu: "4"
+          memory: 16Gi
+        requests:
+          cpu: "2"
+          memory: 8Gi
+    nodeSelector:
+      kubeflow: "true"
+    tolerations:
+      - key: kubeflow
+        operator: Exists
+        effect: NoSchedule
+    minReplicas: 1
+    maxReplicas: 5
+    autoScaling:
+      metrics:
+        - type: External
+          external:
+            metric:
+              backend: "prometheus"
+              serverAddress: "http://groundcover-victoria-metrics-agent.groundcover.svc.cluster.local:8428"
+              query: vllm:num_requests_running   ## if you get multiple pods this ned to avg out to spred the load
+            target:
+              type: Value
+              value: "2"
+
+
+        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qwen2-direct
+  namespace: kubeflow
+spec:
+  selector:
+    app: qwen2-predictor-00001          # matches pod label
+  ports:
+    - protocol: TCP
+      port: 8080                         # service port
+      targetPort: 8080                   # container port in the pod
+  type: ClusterIP
+
