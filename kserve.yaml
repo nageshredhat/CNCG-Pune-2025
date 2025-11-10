@@ -114,3 +114,151 @@ spec:
   timeout: 30m
   values:
     installCRDs: true
+
+# helm upgrade --install kserve-crd oci://ghcr.io/kserve/charts/kserve-crd   --version v0.15.0  -n kserve
+# Pulled: ghcr.io/kserve/charts/kserve-crd:v0.15.0
+# Release "kserve-crd" does not exist. Installing it now.
+# Pulled: ghcr.io/kserve/charts/kserve-crd:v0.15.0
+# Digest: sha256:57ad1a5475fd625cb558214ba711752aa77b7d91686a391a5f5320cfa72f3fa8
+# I1108 08:58:32.801531  265411 warnings.go:110] "Warning: unrecognized format \"int64\""
+# I1108 08:58:33.459420  265411 warnings.go:110] "Warning: unrecognized format \"int32\""
+# NAME: kserve-crd
+# LAST DEPLOYED: Sat Nov  8 08:58:29 2025
+# NAMESPACE: kserve
+# STATUS: deployed
+# REVISION: 1
+# TEST SUITE: None
+
+# =================================================
+
+# $ helm ls -n kserve
+# NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+# kserve-crd      kserve          1               2025-11-08 08:58:29.866360306 +0000 UTC deployed        kserve-crd-v0.15.0                 
+
+# =============================================================
+# $ kubectl get crd -n kserve 
+# NAME                                         CREATED AT
+# clusterservingruntimes.serving.kserve.io     2025-11-08T08:58:32Z
+# clusterstoragecontainers.serving.kserve.io   2025-11-08T08:58:32Z
+# inferencegraphs.serving.kserve.io            2025-11-08T08:58:32Z
+# inferenceservices.serving.kserve.io          2025-11-08T08:58:32Z
+# localmodelcaches.serving.kserve.io           2025-11-08T08:58:32Z
+# localmodelnodegroups.serving.kserve.io       2025-11-08T08:58:32Z
+# localmodelnodes.serving.kserve.io            2025-11-08T08:58:32Z
+# servingruntimes.serving.kserve.io            2025-11-08T08:58:32Z
+# trainedmodels.serving.kserve.io              2025-11-08T08:58:32Z
+
+# ======================================================================================
+# # Add the Jetstack Helm repository
+# helm repo add jetstack https://charts.jetstack.io --force-update
+
+# # Install the cert-manager helm chart
+# helm install \
+#   cert-manager jetstack/cert-manager \
+#   --namespace cert-manager \
+#   --create-namespace \
+#   --version v1.19.1 \
+#   --set crds.enabled=true
+
+# NAME: cert-manager
+# LAST DEPLOYED: Sat Nov  8 09:04:39 2025
+# NAMESPACE: cert-manager
+# STATUS: deployed
+# REVISION: 1
+# TEST SUITE: None
+
+# $ kubectl get all -n cert-manager 
+# NAME                                           READY   STATUS    RESTARTS   AGE
+# pod/cert-manager-55c5fdb5f5-k8dnb              1/1     Running   0          2m35s
+# pod/cert-manager-cainjector-5dc4bf4cdf-hvswn   1/1     Running   0          2m35s
+# pod/cert-manager-webhook-6ff7dcb868-hcqmm      1/1     Running   0          2m35s
+
+# NAME                              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)            AGE
+# service/cert-manager              ClusterIP   10.106.208.171   <none>        9402/TCP           2m35s
+# service/cert-manager-cainjector   ClusterIP   10.104.19.230    <none>        9402/TCP           2m35s
+# service/cert-manager-webhook      ClusterIP   10.100.49.96     <none>        443/TCP,9402/TCP   2m35s
+
+# NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
+# deployment.apps/cert-manager              1/1     1            1           2m35s
+# deployment.apps/cert-manager-cainjector   1/1     1            1           2m35s
+# deployment.apps/cert-manager-webhook      1/1     1            1           2m35s
+
+# NAME                                                 DESIRED   CURRENT   READY   AGE
+# replicaset.apps/cert-manager-55c5fdb5f5              1         1         1       2m35s
+# replicaset.apps/cert-manager-cainjector-5dc4bf4cdf   1         1         1       2m35s
+# replicaset.apps/cert-manager-webhook-6ff7dcb868      1         1         1       2m35s
+# ======================================================================================
+
+# helm upgrade --install kserve oci://ghcr.io/kserve/charts/kserve   --version v0.15.0   --set kserve.controller.deploymentMode=RawDeployment   -n kserve
+
+# Release "kserve" does not exist. Installing it now.
+# Pulled: ghcr.io/kserve/charts/kserve:v0.15.0
+# Digest: sha256:905abce80e975c53b40fba7a12b0b9a1e24bdf65cceebb88fba4ef62bba01406
+# I1108 09:09:34.031115  271046 warnings.go:110] "Warning: spec.privateKey.rotationPolicy: In cert-manager >= v1.18.0, the default value changed from `Never` to `Always`."
+# NAME: kserve
+# LAST DEPLOYED: Sat Nov  8 09:09:31 2025
+# NAMESPACE: kserve
+# STATUS: deployed
+# REVISION: 1
+# TEST SUITE: None
+
+# ============================================================
+# $ kubectl get all -n kserve 
+# NAME                                             READY   STATUS    RESTARTS   AGE
+# pod/kserve-controller-manager-69b6dbf9cf-n5lgn   2/2     Running   0          10m
+
+# NAME                                        TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+# service/kserve-controller-manager-service   ClusterIP   10.100.217.209   <none>        8443/TCP   10m
+# service/kserve-webhook-server-service       ClusterIP   10.105.146.133   <none>        443/TCP    10m
+
+# NAME                                        READY   UP-TO-DATE   AVAILABLE   AGE
+# deployment.apps/kserve-controller-manager   1/1     1            1           10m
+
+# NAME                                                   DESIRED   CURRENT   READY   AGE
+# replicaset.apps/kserve-controller-manager-69b6dbf9cf   1         1         1       10m
+
+
+# helm repo add kedacore https://kedacore.github.io/charts  
+# helm repo update
+
+# helm install keda kedacore/keda --namespace keda --create-namespace
+
+# $ kubectl get pods -n keda
+# NAME                                               READY   STATUS    RESTARTS        AGE
+# keda-admission-webhooks-774967bdd5-m9qnr           1/1     Running   0               9m49s
+# keda-operator-f86b5485f-g9p9k                      1/1     Running   1               9m49s
+# keda-operator-metrics-apiserver-6f48cf8dc9-jnmk6   1/1     Running   0               9m49s
+
+
+# $ kubectl create ns monitoring
+# namespace/monitoring created
+# nagesh@OPLPT150:~/CNCG-Pune-2025$ kubectl apply -f /home/nagesh/CNCG-Pune-2025/promethous.yaml
+# clusterrole.rbac.authorization.k8s.io/prometheus created
+# clusterrolebinding.rbac.authorization.k8s.io/prometheus created
+# configmap/prometheus-server-conf created
+# deployment.apps/prometheus-deployment created
+# service/prometheus-service created
+
+# $ kubectl get all -n monitoring 
+# NAME                                        READY   STATUS    RESTARTS   AGE
+# pod/prometheus-deployment-d7688884c-9mg6x   1/1     Running   0          8m47s
+
+# NAME                         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+# service/prometheus-service   ClusterIP   10.110.254.98   <none>        8080/TCP   8m47s
+
+# NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+# deployment.apps/prometheus-deployment   1/1     1            1           8m47s
+
+# NAME                                              DESIRED   CURRENT   READY   AGE
+# replicaset.apps/prometheus-deployment-d7688884c   1         1         1       8m47s
+
+
+# Serverless
+# helm upgrade --install kserve oci://ghcr.io/kserve/charts/kserve   --version v0.15.0   --set kserve.controller.deploymentMode=Serverless   -n kserve
+
+# Knative
+# helm upgrade --install kserve oci://ghcr.io/kserve/charts/kserve   --version v0.15.0   --set kserve.controller.deploymentMode=Knative   -n kserve
+
+
+######################################################
+# in the monitoring add the vllm dashboard, HPA &  dcgm expoerter with nvidia gpu monitoring
