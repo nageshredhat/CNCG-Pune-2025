@@ -10,7 +10,7 @@ spec:
     resources:
       requests:
         storage: 50G
-    storageClassName: local-storage
+    storageClassName: standard
     volumeMode: Filesystem
     volumeName: models
   persistentVolumeSpec:
@@ -21,15 +21,15 @@ spec:
       storage: 50G
     local:
       path: /models
-    storageClassName: local-storage
+    storageClassName: standard
 
 ---
 apiVersion: serving.kserve.io/v1alpha1
 kind: LocalModelCache
 metadata:
-  name: meta-llama3-8b-instruct
+  name: qwen2.5-0.5b-instruct-cache
 spec:
-  sourceModelUri: 'hf://meta-llama/meta-llama-3-8b-instruct'
+  sourceModelUri: 'hf://Qwen/Qwen2.5-0.5B-Instruct'
   modelSize: 10Gi
   nodeGroups:
     - workers
