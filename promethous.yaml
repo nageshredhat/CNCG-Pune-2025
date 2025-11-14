@@ -189,12 +189,6 @@ spec:
           mountPath: /etc/prometheus/
         - name: prometheus-storage-volume
           mountPath: /prometheus/
-      # nodeSelector:
-      #   kubeflow: "true"
-      # tolerations:
-      # - key: kubeflow
-      #   operator: Exists
-      #   effect: NoSchedule
       volumes:
       - name: prometheus-config-volume
         configMap:
@@ -221,3 +215,146 @@ spec:
   ports:
   - port: 8080
     targetPort: 9090
+---
+####################
+###GRAFANA SETUP####
+####################
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-admin-credentials
+  namespace: monitoring
+type: Opaque
+stringData:
+  # default admin user is "admin"
+  admin-user: "admin"
+  # CHANGE this before/after apply to a strong password (or rotate later)
+  admin-password: "ChangeMe123!"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: monitoring
+  labels:
+    app: grafana
+data:
+  # Grafana provisioning file for datasources
+  prometheus-datasource.yaml: |-
+    apiVersion: 1
+    deleteDatasources:
+      - name: Prometheus
+        orgId: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        isDefault: true
+        url: http://prometheus-service.monitoring.svc:8080
+        # set to true if your Prometheus requires basic auth or certificate; adjust if necessary
+        basicAuth: false
+        editable: true
+        jsonData:
+          httpMode: "GET"
+---
+# Optional ConfigMap for dashboards provisioning (empty for now)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: monitoring
+  labels:
+    app: grafana
+data:
+  # You can add JSON dashboard files here, e.g. my-dashboard.json: |-
+  # For now it's empty so Grafana starts without auto dashboards
+  placeholder: "add dashboards here as JSON files under this ConfigMap if you want"
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          # use stable grafana image; change tag if you want a specific version
+          image: grafana/grafana:10.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin-credentials
+                  key: admin-user
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin-credentials
+                  key: admin-password
+            # optional: disable anonymous or tune other GF_ environment variables as needed
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "false"
+          volumeMounts:
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+            - name: grafana-provisioning
+              mountPath: /etc/grafana/provisioning/datasources
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+      volumes:
+        - name: grafana-storage
+          emptyDir: {}
+        - name: grafana-provisioning
+          configMap:
+            name: grafana-datasources
+            items:
+              - key: prometheus-datasource.yaml
+                path: prometheus-datasource.yaml
+---
+# ClusterIP Service to expose Grafana inside the cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  type: ClusterIP
+  selector:
+    app: grafana
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: http

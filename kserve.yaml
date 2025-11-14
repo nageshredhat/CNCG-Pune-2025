@@ -189,6 +189,7 @@ spec:
 # replicaset.apps/cert-manager-webhook-6ff7dcb868      1         1         1       2m35s
 # ======================================================================================
 
+# helm install kserve oci://ghcr.io/kserve/charts/kserve   --version v0.15.0   --set kserve.controller.deploymentMode=RawDeployment   -n kserve
 # helm upgrade --install kserve oci://ghcr.io/kserve/charts/kserve   --version v0.15.0   --set kserve.controller.deploymentMode=RawDeployment   -n kserve
 
 # Release "kserve" does not exist. Installing it now.
@@ -262,3 +263,9 @@ spec:
 
 ######################################################
 # in the monitoring add the vllm dashboard, HPA &  dcgm expoerter with nvidia gpu monitoring
+
+
+# -------------------------------
+# Write a script for create all nameapnecese in one go 
+
+# kubectl port-forward svc/prometheus-service 8080:8080 -n monitoring

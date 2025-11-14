@@ -17,7 +17,7 @@ spec:
       metadata:
         metricName: vllm:num_requests_running{model_name="Qwen/Qwen2.5-0.5B-Instruct"}
         threshold: '2'
-        serverAddress: "http://prometheus-service.kubeflow.svc.cluster.local:8080"
+        serverAddress: "http://prometheus-service.monitoring.svc.cluster.local:8080"
         # query should aggregate across pods; user provided `vllm:num_requests_running` and noted averaging
         query: avg(vllm:num_requests_running)
         #If your metric name is different (contains a colon) replace the above query accordingly.

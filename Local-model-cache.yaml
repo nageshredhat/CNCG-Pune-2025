@@ -1,0 +1,35 @@
+apiVersion: serving.kserve.io/v1alpha1
+kind: LocalModelNodeGroup
+metadata:
+  name: workers
+spec:
+  storageLimit: 50G
+  persistentVolumeClaimSpec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 50G
+    storageClassName: local-storage
+    volumeMode: Filesystem
+    volumeName: models
+  persistentVolumeSpec:
+    accessModes:
+      - ReadWriteOnce
+    volumeMode: Filesystem
+    capacity:
+      storage: 50G
+    local:
+      path: /models
+    storageClassName: local-storage
+
+---
+apiVersion: serving.kserve.io/v1alpha1
+kind: LocalModelCache
+metadata:
+  name: meta-llama3-8b-instruct
+spec:
+  sourceModelUri: 'hf://meta-llama/meta-llama-3-8b-instruct'
+  modelSize: 10Gi
+  nodeGroups:
+    - workers
