@@ -115,6 +115,8 @@ spec:
   values:
     installCRDs: true
 
+################## FOLLOWING STEPS FOR AD-HOC MANUAL INSTALLATION ONLY ##############
+
 # helm upgrade --install kserve-crd oci://ghcr.io/kserve/charts/kserve-crd   --version v0.15.0  -n kserve
 # Pulled: ghcr.io/kserve/charts/kserve-crd:v0.15.0
 # Release "kserve-crd" does not exist. Installing it now.

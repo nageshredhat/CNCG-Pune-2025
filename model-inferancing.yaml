@@ -105,12 +105,6 @@ spec:
         requests:
           cpu: "2"
           memory: 4Gi
-    # nodeSelector:
-    #   kubeflow: "true"
-    # tolerations:
-    #   - key: kubeflow
-    #     operator: Exists
-    #     effect: NoSchedule
 
 ---
 apiVersion: v1
@@ -134,22 +128,22 @@ spec:
       targetPort: 8080                 # container port in the pod
   type: ClusterIP
 
-# ---
-# apiVersion: v1
-# kind: PersistentVolumeClaim
-# metadata:
-#   name: qwen2.5-0.5b-instruct-cache-workers
-#   namespace: kubeflow
-# spec:
-#   accessModes:
-#     - ReadWriteOnce
-#   resources:
-#     requests:
-#       storage: 20Gi
-#   storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qwen2.5-0.5b-instruct-cache-workers
+  namespace: kubeflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
 
 # ---
-# ########### AUTO SCALE WITH KEDA AND OPENTELEMETRY METRICS ###########
+# ########### AUTO SCALE WITH KEDA AND Prometheus METRICS ###########
 # apiVersion: serving.kserve.io/v1beta1
 # kind: InferenceService
 # metadata:
@@ -200,7 +194,7 @@ spec:
 #           external:
 #             metric:
 #               backend: "prometheus"
-#               serverAddress: "http://groundcover-victoria-metrics-agent.groundcover.svc.cluster.local:8428"
+#               serverAddress: "http://prometheus.monitoring.svc.cluster.local:9090"
 #               query: vllm:num_requests_running   ## if you get multiple pods this ned to avg out to spred the load
 #             target:
 #               type: Value
